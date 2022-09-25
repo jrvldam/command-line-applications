@@ -6,7 +6,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"testing"
 )
 
@@ -49,7 +48,7 @@ func TestTodoCLI(t *testing.T) {
 	cmdPath := filepath.Join(dir, binName)
 
 	t.Run("add new task", func(t *testing.T) {
-		cmd := exec.Command(cmdPath, strings.Split(task, " ")...)
+		cmd := exec.Command(cmdPath, "-task", task)
 
 		if err := cmd.Run(); err != nil {
 			t.Fatal(err)
@@ -57,7 +56,7 @@ func TestTodoCLI(t *testing.T) {
 	})
 
 	t.Run("list tasks", func(t *testing.T) {
-		cmd := exec.Command(cmdPath)
+		cmd := exec.Command(cmdPath, "-list")
 		out, err := cmd.CombinedOutput()
 		if err != nil {
 			t.Fatal(err)
@@ -67,6 +66,35 @@ func TestTodoCLI(t *testing.T) {
 
 		if want != string(out) {
 			t.Errorf("got %s, want %s", string(out), want)
+		}
+	})
+
+	t.Run("complete task", func(t *testing.T) {
+		cmd := exec.Command(cmdPath, "-complete", "1")
+		cmd.Run()
+
+		cmdL := exec.Command(cmdPath, "-list")
+		out, err := cmdL.CombinedOutput()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		want := ""
+
+		if want != string(out) {
+			t.Errorf("got %s, want %s", string(out), want)
+		}
+	})
+
+	t.Run("no flags passed", func(t *testing.T) {
+		cmd := exec.Command(cmdPath)
+		out, err := cmd.CombinedOutput()
+		if err == nil {
+			t.Fatal("error expected")
+		}
+
+		if string(out) != "Invalid option\n" {
+			t.Errorf("got %s, want %s", string(out), "Invalid Option\n")
 		}
 	})
 }
